@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
-const Chat = ({ token }) => {
+const Chat = ({ token, senderId }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [receiver, setReceiver] = useState("");
@@ -48,14 +48,39 @@ const Chat = ({ token }) => {
       { content: newMessage, receiverId: receiver },
       { headers: { Authorization: `Bearer ${token}` } }
     );
+    try {
+      const socket = new SockJS("http://localhost:8080/ws");
+      const client = new Client({
+        webSocketFactory: () => socket,
+        reconnectDelay: 5000,
+        heartbeatIncoming: 4000,
+        heartbeatOutgoing: 4000,
+      });
+
+      client.onConnect = () => {
+        client.publish({
+          destination: "/app/chat",
+          body: JSON.stringify({
+            senderId: senderId, // Replace with the actual sender ID dynamically
+            receiverId: receiver,
+            content: newMessage,
+          }),
+        });
+      };
+
+      client.activate();
+      setMessages([
+        ...messages,
+        { senderId: senderId, receiverId: receiver, content: newMessage },
+      ]);
+      setNewMessage("");
+      setReceiver("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
     setMessages([...messages, response.data.data]);
     setNewMessage("");
     setReceiver("");
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
   };
 
   return (

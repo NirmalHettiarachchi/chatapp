@@ -11,6 +11,7 @@ public class WebSocketController {
     @MessageMapping("/chat")
     @SendTo("/topic/messages")
     public Message send(Message message) {
+        System.out.println("Message received and broadcasted: " + message); // Debug log
         return message;
     }
 }
