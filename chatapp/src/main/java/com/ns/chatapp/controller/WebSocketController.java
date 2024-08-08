@@ -11,7 +11,6 @@ public class WebSocketController {
     @MessageMapping("/chat")
     @SendTo("/topic/messages")
     public Message send(Message message) {
-        // Here you can save the message to the database if needed
         return message;
     }
 }
