@@ -1,6 +1,7 @@
 package com.ns.chatapp.controller;
 
 import com.ns.chatapp.config.JwtUtil;
+import com.ns.chatapp.dto.ApiResponse;
 import com.ns.chatapp.model.User;
 import com.ns.chatapp.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +23,12 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
         if(userService.findByUsername(user.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("Username is already taken.");
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Username is already taken.", null));
         }
         String encodedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encodedPassword);
         userService.save(user);
-        return ResponseEntity.ok("User registered successfully.");
+        return ResponseEntity.ok(new ApiResponse<>(true, "User registered successfully.", null));
     }
 
     @PostMapping("/login")
@@ -36,15 +37,14 @@ public class UserController {
 
         if (userOptional.isPresent()) {
             User foundUser = userOptional.get();
-
             boolean passwordMatches = passwordEncoder.matches(user.getPassword(), foundUser.getPassword());
 
             if (passwordMatches) {
                 String token = jwtUtil.generateToken(foundUser.getUsername());
-                return ResponseEntity.ok(token);
+                return ResponseEntity.ok(new ApiResponse<>(true, "Login successful.", token));
             }
         }
 
-        return ResponseEntity.status(401).body("Invalid username or password.");
+        return ResponseEntity.status(401).body(new ApiResponse<>(false, "Invalid username or password.", null));
     }
 }
